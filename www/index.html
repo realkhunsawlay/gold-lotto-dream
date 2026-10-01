@@ -926,7 +926,8 @@
   loadGold();
   setInterval(loadGold, 5 * 60 * 1000);
   document.addEventListener("visibilitychange", () => { if (!document.hidden) loadGold(); });
-  showTab(location.hash === "#lotto" ? "lotto" : location.hash === "#dream" ? "dream" : location.hash === "#settings" ? "settings" : store.get("tab", "gold"));
+  // The deployed project URL should open directly on the lottery page.
+  showTab(location.hash === "#dream" ? "dream" : location.hash === "#settings" ? "settings" : "lotto");
 </script>
 <script src="dream-data.js"></script>
 <script src="dream.js"></script>
