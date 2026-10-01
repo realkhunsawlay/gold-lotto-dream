@@ -8,8 +8,8 @@
   // The Android app instead streams them from GitHub's raw CDN at runtime.
   //
   // >>> EDIT THIS once you've pushed the repo to GitHub: <<<
-  const GITHUB_OWNER = "YOUR-GITHUB-USERNAME";
-  const GITHUB_REPO = "gold-lotto";
+  const GITHUB_OWNER = "realkhunsawlay";
+  const GITHUB_REPO = "gold-lotto-dream";
   const GITHUB_BRANCH = "main";
   const REMOTE_IMAGE_BASE = `https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/${GITHUB_BRANCH}/dream-images`;
 
