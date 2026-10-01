@@ -1,0 +1,87 @@
+name: Android release
+
+# Push a tag like v1.0.0 → builds a signed APK (+ Play Store .aab) and publishes a GitHub Release.
+# "Run workflow" on the Actions tab builds a test APK without making a release.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+
+      - name: Install and copy the web app into Android
+        run: |
+          npm ci
+          npx cap sync android
+
+      - name: Work out the version
+        id: ver
+        run: |
+          if [ "$GITHUB_REF_TYPE" = "tag" ]; then V="${GITHUB_REF_NAME#v}"; else V="0.0.0-test.${GITHUB_RUN_NUMBER}"; fi
+          echo "name=$V" >> "$GITHUB_OUTPUT"
+
+      - name: Load the signing key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
+            echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
+          else
+            echo "::warning::Signing secrets are not set. The APK is signed with a temporary key, so later versions won't install over it. See README → Signing."
+          fi
+
+      - name: Build APK and app bundle
+        working-directory: android
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleRelease bundleRelease --no-daemon \
+            -PappVersionName="${{ steps.ver.outputs.name }}" \
+            -PappVersionCode="${{ github.run_number }}"
+
+      - name: Collect files
+        run: |
+          mkdir dist
+          cp android/app/build/outputs/apk/release/app-release.apk "dist/GoldLotto-${{ steps.ver.outputs.name }}.apk"
+          cp android/app/build/outputs/bundle/release/app-release.aab "dist/GoldLotto-${{ steps.ver.outputs.name }}.aab"
+          cd dist && sha256sum * > SHA256SUMS.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: GoldLotto-${{ steps.ver.outputs.name }}
+          path: dist/*
+
+      - name: Publish GitHub Release
+        if: github.ref_type == 'tag'
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Gold & Lotto ${{ steps.ver.outputs.name }}
+          files: dist/*
+          generate_release_notes: true
+          body: |
+            **Install on Android:** download `GoldLotto-${{ steps.ver.outputs.name }}.apk` below on your phone and open it.
+            Allow "install unknown apps" for your browser when Android asks.
+
+            The `.aab` file is for uploading to Google Play.

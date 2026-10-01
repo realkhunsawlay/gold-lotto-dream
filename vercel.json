@@ -1,0 +1,14 @@
+{
+  "framework": null,
+  "installCommand": "",
+  "buildCommand": "",
+  "regions": ["sin1"],
+  "rewrites": [
+    { "source": "/", "destination": "/www/index.html" },
+    { "source": "/i18n.js", "destination": "/www/i18n.js" },
+    { "source": "/lotto.js", "destination": "/www/lotto.js" },
+    { "source": "/dream-data.js", "destination": "/www/dream-data.js" },
+    { "source": "/dream.js", "destination": "/www/dream.js" },
+    { "source": "/fonts/:file", "destination": "/www/fonts/:file" }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "name": "gold-lotto",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Thai gold prices and Thai Government Lottery checker in Pa'O, Burmese and English \u2013 web app + Android app",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "sync": "cap sync android",
+    "open": "cap open android",
+    "icons": "capacitor-assets generate --android --iconBackgroundColor '#28166f' --iconBackgroundColorDark '#28166f' --splashBackgroundColor '#28166f' --splashBackgroundColorDark '#140b3a'"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.5.2",
+    "@capacitor/core": "^8.5.2",
+    "@capacitor/splash-screen": "^8.0.2"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^8.5.2"
+  }
+}

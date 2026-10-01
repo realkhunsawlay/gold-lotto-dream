@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="blk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0f0c22" media="(prefers-color-scheme: dark)">
+<title>Gold &amp; Lotto</title>
+<meta name="description" content="Thai gold price and Thai Government Lottery checker in Pa'O, Burmese and English">
+<script src="i18n.js"></script>
+<style>
+  /* Fonts (bundled for offline use): Latin + numbers = Manrope, Myanmar script (Pa'O, Burmese) = Padauk */
+  @font-face { font-family: "App"; font-weight: 500; font-display: swap; src: url(fonts/manrope-latin-500-normal.woff2) format("woff2"); unicode-range: U+0000-00FF, U+2000-206F, U+2248, U+00D7, U+0E3F, U+2212; }
+  @font-face { font-family: "App"; font-weight: 700; font-display: swap; src: url(fonts/manrope-latin-700-normal.woff2) format("woff2"); unicode-range: U+0000-00FF, U+2000-206F, U+2248, U+00D7, U+0E3F, U+2212; }
+  @font-face { font-family: "App"; font-weight: 800; font-display: swap; src: url(fonts/manrope-latin-800-normal.woff2) format("woff2"); unicode-range: U+0000-00FF, U+2000-206F, U+2248, U+00D7, U+0E3F, U+2212; }
+  @font-face { font-family: "App"; font-weight: 500; font-display: swap; src: url(fonts/padauk-myanmar-400-normal.woff2) format("woff2"); unicode-range: U+1000-109F, U+A9E0-A9FF, U+AA60-AA7F, U+200C-200D, U+25CC; }
+  @font-face { font-family: "App"; font-weight: 700; font-display: swap; src: url(fonts/padauk-myanmar-700-normal.woff2) format("woff2"); unicode-range: U+1000-109F, U+A9E0-A9FF, U+AA60-AA7F, U+200C-200D, U+25CC; }
+  @font-face { font-family: "App"; font-weight: 800; font-display: swap; src: url(fonts/padauk-myanmar-700-normal.woff2) format("woff2"); unicode-range: U+1000-109F, U+A9E0-A9FF, U+AA60-AA7F, U+200C-200D, U+25CC; }
+
+  /* Pa'O flag: navy with a white star, red, green. Used sparingly on a calm white page. */
+  :root {
+    --navy: #28166f;
+    --red: #d42a22;
+    --green: #00703c;
+
+    --bg: #ffffff;
+    --soft: #f5f4fa;          /* input wells, subtle fills */
+    --text: #17133a;
+    --muted: #6d6a88;
+    --line: #ecebf3;
+    --ink: var(--navy);       /* big numbers, active states */
+    --red-soft: #fdecea;
+    --win: #00703c;
+    --win-soft: #e7f4ec;
+    --on-accent: #ffffff;
+    --shadow: 0 10px 30px -18px rgba(40, 22, 111, .35);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0f0c22;
+      --soft: #1a1636;
+      --text: #efedf9;
+      --muted: #9f9bbd;
+      --line: #25203f;
+      --ink: #b3a6ff;
+      --red: #ff5d52;
+      --red-soft: #3a1620;
+      --win: #43d392;
+      --win-soft: #11291f;
+      --shadow: 0 10px 30px -18px rgba(0, 0, 0, .8);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0f0c22;
+    --soft: #1a1636;
+    --text: #efedf9;
+    --muted: #9f9bbd;
+    --line: #25203f;
+    --ink: #b3a6ff;
+    --red: #ff5d52;
+    --red-soft: #3a1620;
+    --win: #43d392;
+    --win-soft: #11291f;
+    --shadow: 0 10px 30px -18px rgba(0, 0, 0, .8);
+  }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html { -webkit-text-size-adjust: 100%; background: var(--bg); }
+  body {
+    margin: 0; min-height: 100vh; color: var(--text); background: var(--bg);
+    font-family: "App", "Myanmar Text", sans-serif; font-weight: 500; font-size: 16px; line-height: 1.75;
+  }
+  [hidden] { display: none !important; }
+  .num { font-variant-numeric: tabular-nums; }
+  button, input, select { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--red); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+  .col { max-width: 560px; margin: 0 auto; padding: 0 20px; }
+
+  /* ---------- Top bar ---------- */
+  .top {
+    position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--bg) 92%, transparent);
+    backdrop-filter: saturate(1.4) blur(12px); padding-top: env(safe-area-inset-top);
+  }
+  .top .col { display: flex; align-items: center; gap: 10px; height: 60px; }
+  .logo {
+    width: 30px; height: 30px; border-radius: 9px; flex: none; display: grid; place-items: center;
+    background: var(--navy); box-shadow: inset 0 -3px 0 var(--red);
+  }
+  .logo svg { width: 15px; height: 15px; fill: #fff; margin-top: -2px; }
+  .brand { font-weight: 800; font-size: 1.05rem; letter-spacing: -.01em; margin-right: auto; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* the flag in one thin line: navy + red over green */
+  .rule { height: 4px; display: grid; grid-template-rows: 1fr 1fr; }
+  .rule::before { content: ""; background: linear-gradient(90deg, var(--navy) 0 50%, var(--red) 50% 100%); }
+  .rule::after { content: ""; background: var(--green); }
+
+  .lang { position: relative; }
+  .pill {
+    display: inline-flex; align-items: center; gap: 6px; cursor: pointer; white-space: nowrap;
+    border: 1px solid var(--line); background: var(--bg); border-radius: 999px; padding: 3px 12px 3px 10px; font-size: .9rem;
+  }
+  .pill svg { width: 15px; height: 15px; color: var(--muted); }
+  .menu {
+    position: absolute; right: 0; top: calc(100% + 8px); min-width: 180px; z-index: 30;
+    background: var(--bg); border: 1px solid var(--line); border-radius: 14px; padding: 6px; box-shadow: var(--shadow);
+  }
+  .menu button {
+    width: 100%; display: flex; justify-content: space-between; gap: 12px; border: 0; background: transparent;
+    padding: 6px 10px; border-radius: 9px; cursor: pointer; text-align: left;
+  }
+  .menu button:hover { background: var(--soft); }
+  .menu button[aria-checked="true"] { font-weight: 800; }
+  .menu button[aria-checked="true"]::after { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--red); align-self: center; }
+
+  main { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
+  section.block { padding: 22px 0; border-bottom: 1px solid var(--line); }
+  section.block:last-of-type { border-bottom: 0; }
+  .label { color: var(--muted); font-size: .9rem; }
+  h2 { margin: 0 0 12px; font-size: 1.05rem; font-weight: 800; letter-spacing: -.01em; line-height: 1.6; }
+  .row-between { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 12px; }
+  .row-between > .label { white-space: nowrap; }
+  .note { font-size: .85rem; color: var(--muted); }
+  .status { font-size: .88rem; color: var(--red); margin-top: 6px; }
+  .status:empty { display: none; }
+
+  .icon-btn {
+    width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; cursor: pointer; flex: none;
+    border: 1px solid var(--line); background: var(--bg); color: var(--muted);
+  }
+  .icon-btn svg { width: 16px; height: 16px; }
+  .icon-btn.spin svg { animation: spin .8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ---------- Gold ---------- */
+  .price { font-weight: 800; font-size: clamp(2.8rem, 13vw, 3.6rem); line-height: 1.1; letter-spacing: -.03em; color: var(--ink); margin: 6px 0 8px; }
+  .price .cur { font-size: .45em; font-weight: 700; color: var(--muted); letter-spacing: 0; margin-left: 6px; }
+  .meta { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: .9rem; color: var(--muted); }
+  .chip { display: inline-flex; gap: 6px; align-items: baseline; background: var(--soft); border-radius: 999px; padding: 0 10px; color: var(--text); }
+  .chip b { font-weight: 800; }
+
+  table.t { width: 100%; border-collapse: collapse; }
+  .t th, .t td { padding: 10px 0; text-align: right; }
+  .t thead th { font-weight: 500; font-size: .85rem; color: var(--muted); padding-top: 0; }
+  .t th:first-child, .t td:first-child { text-align: left; }
+  .t tbody tr + tr > * { border-top: 1px solid var(--line); }
+  .t tbody th { font-weight: 700; }
+  .t td { font-weight: 800; font-size: 1.1rem; }
+  .t td.muted { color: var(--muted); font-weight: 700; }
+
+  .calc { display: grid; grid-template-columns: 96px 1fr; gap: 8px; }
+  .calc .full { grid-column: 1 / -1; }
+  .field {
+    width: 100%; border: 0; background: var(--soft); border-radius: 12px; padding: 10px 12px; outline: none;
+    font-size: 1rem; line-height: 1.5; appearance: none; -webkit-appearance: none;
+  }
+  select.field {
+    padding-right: 34px; cursor: pointer;
+    background: var(--soft) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236d6a88' stroke-width='2' fill='none'/%3E%3C/svg%3E") no-repeat right 12px center;
+  }
+  .field:focus { box-shadow: 0 0 0 2px var(--ink) inset; }
+  .result { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-top: 14px; }
+  .result .v { font-weight: 800; font-size: 1.6rem; letter-spacing: -.02em; color: var(--ink); }
+
+  /* ---------- Lottery ---------- */
+  .draw-pick { border-radius: 999px; background-color: var(--soft); padding: 4px 32px 4px 14px; width: auto; max-width: 100%; font-size: .92rem; }
+  .digits { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; margin: 14px 0 0; }
+  .digit {
+    aspect-ratio: 3 / 4; display: grid; place-items: center; border-radius: 14px;
+    font-weight: 800; font-size: clamp(1.9rem, 9vw, 2.6rem); line-height: 1;
+    background: var(--soft); color: var(--ink);
+  }
+  .digit.che { background: var(--red); color: #fff; }
+  @media (min-width: 600px) { .digit { aspect-ratio: auto; height: 96px; } }
+  .digit.empty { color: var(--line); }
+  .che-row { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; margin-top: 8px; }
+  .che-label { grid-column: 4 / 7; display: flex; align-items: center; gap: 8px; font-size: .9rem; font-weight: 700; color: var(--red); }
+  .che-label::before, .che-label::after { content: ""; flex: 1; height: 1.5px; background: currentColor; opacity: .5; }
+  .runs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 18px; }
+  .run + .run { border-left: 1px solid var(--line); padding-left: 14px; }
+  .run .v { font-weight: 800; font-size: 1.15rem; letter-spacing: .04em; }
+
+  .ticket { position: relative; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
+  .cell {
+    height: 56px; display: grid; place-items: center; border-radius: 14px; background: var(--soft);
+    font-weight: 800; font-size: 1.6rem; box-shadow: 0 0 0 0 transparent inset; transition: box-shadow .15s;
+  }
+  .cell.active { box-shadow: 0 0 0 2px var(--ink) inset; }
+  .ticket input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: text; font-size: 16px; }
+  .hint { margin-top: 10px; }
+
+  .list { list-style: none; margin: 14px 0 0; padding: 0; }
+  .item {
+    display: grid; grid-template-columns: auto 1fr auto; grid-template-areas: "no amt del" "what what what";
+    gap: 0 12px; align-items: center; padding: 10px 12px; border-radius: 14px;
+  }
+  .item + .item { margin-top: 6px; }
+  .item .no { grid-area: no; font-weight: 800; font-size: 1.1rem; letter-spacing: .14em; }
+  .item .amt { grid-area: amt; text-align: right; font-weight: 800; line-height: 1.4; }
+  .item .amt small { display: block; font-weight: 500; font-size: .78rem; color: var(--muted); }
+  .item .what { grid-area: what; font-size: .88rem; color: var(--muted); line-height: 1.6; }
+  .item .del { grid-area: del; }
+  .item.lose { grid-template-areas: "no what del"; background: var(--soft); }
+  .item.win { background: var(--win-soft); }
+  .item.win .amt { color: var(--win); }
+  .item.win .what { color: var(--text); }
+  .del { width: 28px; height: 28px; border: 0; background: transparent; border-radius: 50%; color: var(--muted); cursor: pointer; font-size: 1.1rem; line-height: 1; }
+  .del:hover { background: color-mix(in srgb, var(--muted) 15%, transparent); }
+
+  .facts { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 18px; }
+  .facts .v { font-weight: 800; }
+
+  .seg { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; margin-bottom: 14px; }
+  .seg::-webkit-scrollbar { display: none; }
+  .seg button {
+    flex: none; border: 0; background: var(--soft); color: var(--muted); border-radius: 999px;
+    padding: 3px 14px; cursor: pointer; font-size: .9rem;
+  }
+  .seg button[aria-pressed="true"] { background: var(--navy); color: #fff; }
+  @media (prefers-color-scheme: dark) { .seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); } }
+  .nums { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px 4px; margin-top: 10px; }
+  .nums span { text-align: center; font-size: 1rem; letter-spacing: .05em; padding: 2px 0; border-radius: 8px; }
+  .nums span.hit { background: var(--win); color: #fff; font-weight: 800; }
+  .nums.wide { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .nums.wide span { font-size: 1.3rem; font-weight: 800; background: var(--soft); padding: 8px 0; }
+  .nums.wide span.hit { background: var(--win); }
+
+  footer { padding: 18px 0 8px; font-size: .8rem; color: var(--muted); line-height: 1.8; }
+  footer a { color: inherit; }
+  .loading .price, .loading .t td { opacity: .3; }
+  .loading .price, .loading .t td { opacity: .3; }
+
+
+  /* ---------- Settings ---------- */
+  .settings-card { background: var(--soft); border-radius: 16px; padding: 4px; margin-top: 4px; }
+  .settings-row { display: flex; align-items: flex-start; gap: 14px; padding: 14px 12px; }
+  .settings-row + .settings-row { border-top: 1px solid var(--line); }
+  .settings-row .s-icon {
+    width: 36px; height: 36px; border-radius: 10px; background: var(--bg); color: var(--ink);
+    display: grid; place-items: center; flex: none;
+  }
+  .settings-row .s-icon svg { width: 18px; height: 18px; }
+  .settings-row .s-body { flex: 1; min-width: 0; }
+  .settings-row .s-title { font-weight: 800; font-size: .95rem; }
+  .settings-row .s-sub { color: var(--muted); font-size: .85rem; margin-top: 2px; line-height: 1.6; }
+  .settings-row .s-sub a { color: var(--ink); font-weight: 700; text-decoration: none; }
+  .theme-seg { margin-top: 10px; }
+  .theme-seg .seg { margin-bottom: 0; }
+  .theme-seg .seg button { display: inline-flex; align-items: center; gap: 6px; padding: 7px 16px; }
+  .theme-seg .seg svg { width: 14px; height: 14px; }
+
+  /* ---------- Dream dictionary ---------- */
+  .dream-search { position: relative; }
+  .dream-search .field { padding-left: 40px; }
+  .dream-search svg {
+    position: absolute; left: 13px; top: 50%; transform: translateY(-50%);
+    width: 16px; height: 16px; color: var(--muted); pointer-events: none;
+  }
+  .dream-count { margin: 10px 2px 0; color: var(--muted); font-size: .85rem; }
+  .dream-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 12px; }
+  @media (max-width: 380px) { .dream-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .dream-card { background: var(--soft); border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; }
+  .dream-img { background: #fff; aspect-ratio: 1 / 0.92; display: flex; align-items: center; justify-content: center; }
+  .dream-img img { width: 76%; height: 76%; object-fit: contain; }
+  .dream-body { padding: 8px 9px 10px; display: flex; flex-direction: column; gap: 5px; flex: 1; }
+  .dream-top { display: flex; justify-content: space-between; align-items: center; }
+  .dream-no { font-size: .72rem; color: var(--muted); font-weight: 700; }
+  .dream-star { background: none; border: 0; cursor: pointer; font-size: 1rem; color: var(--muted); padding: 1px; line-height: 1; }
+  .dream-star.on { color: #e0a500; }
+  .dream-title { font-size: .82rem; font-weight: 700; min-height: 30px; line-height: 1.3; }
+  .dream-bottom { display: flex; justify-content: space-between; align-items: center; margin-top: auto; }
+  .dream-numb { background: color-mix(in srgb, #e0a500 18%, transparent); color: #a56f00; font-weight: 800; font-size: .82rem; padding: 3px 9px; border-radius: 9px; }
+  @media (prefers-color-scheme: dark) { .dream-numb { background: color-mix(in srgb, #e0a500 25%, transparent); color: #ffcf5c; } }
+  .dream-heart { background: none; border: 0; cursor: pointer; font-size: 1rem; color: var(--muted); padding: 1px; line-height: 1; }
+  .dream-heart.on { color: var(--red); }
+  .dream-empty { text-align: center; color: var(--muted); padding: 40px 20px; font-size: .95rem; }
+  .load-more {
+    display: block; margin: 16px auto 0; background: var(--soft); border: 1px solid var(--line); color: var(--text);
+    padding: 9px 20px; border-radius: 999px; font-size: .9rem; cursor: pointer;
+  }
+
+  /* ---------- Bottom tab bar ---------- */
+  .tabbar {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
+    background: color-mix(in srgb, var(--bg) 94%, transparent); backdrop-filter: saturate(1.4) blur(12px);
+    border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom);
+  }
+  .tabbar .col { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; height: 64px; }
+  .tab {
+    border: 0; background: transparent; cursor: pointer; color: var(--muted);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+    font-size: .8rem; line-height: 1.4; position: relative;
+  }
+  .tab svg { width: 22px; height: 22px; }
+  .tab[aria-selected="true"] { color: var(--ink); font-weight: 800; }
+  .tab[aria-selected="true"]::before {
+    content: ""; position: absolute; top: 0; width: 28px; height: 3px; border-radius: 0 0 3px 3px; background: var(--red);
+  }
+</style>
+</head>
+<body class="loading">
+
+<header class="top">
+  <div class="col">
+    <span class="logo" aria-hidden="true"><svg viewBox="150 45 150 145"><path d="M296.36 101.85 180.9 185.75 225 50l44.1 135.75-115.46-83.9Z"/></svg></span>
+    <span class="brand" data-i18n="brand"></span>
+    <div class="lang">
+      <button class="pill" id="lang-btn" type="button" aria-haspopup="menu" aria-expanded="false" data-i18n-aria="language">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.7 3.8 5.7 3.8 9s-1.3 6.3-3.8 9c-2.5-2.7-3.8-5.7-3.8-9S9.5 5.7 12 3z"/></svg>
+        <span id="lang-name"></span>
+      </button>
+      <div class="menu" id="lang-menu" role="menu" hidden></div>
+    </div>
+  </div>
+  <div class="rule" aria-hidden="true"></div>
+</header>
+
+<main>
+  <!-- ===================== GOLD ===================== -->
+  <div id="panel-gold" class="col" role="tabpanel" aria-labelledby="tab-gold">
+    <section class="block">
+      <div class="row-between">
+        <span class="label" data-i18n="goldHeroLabel"></span>
+        <button class="icon-btn" id="refresh" type="button" data-i18n-aria="refresh">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5"/></svg>
+        </button>
+      </div>
+      <div class="price num"><span id="hero">—</span><span class="cur">฿</span></div>
+      <div class="meta">
+        <span id="hero-date"></span>
+        <span id="hero-round"></span>
+      </div>
+      <div class="meta" style="margin-top:8px"><span class="chip num" id="hero-buy"></span></div>
+      <div class="status" id="gold-note" role="status"></div>
+    </section>
+
+    <section class="block">
+      <h2 data-i18n="todayPrices"></h2>
+      <table class="t num">
+        <thead><tr><th></th><th data-i18n="shopSell"></th><th data-i18n="shopBuy"></th></tr></thead>
+        <tbody>
+          <tr><th scope="row" data-i18n="goldBar"></th><td id="bar-sell">—</td><td class="muted" id="bar-buy">—</td></tr>
+          <tr><th scope="row" data-i18n="goldJewelry"></th><td id="orn-sell">—</td><td class="muted" id="orn-buy">—</td></tr>
+        </tbody>
+      </table>
+      <div class="note" data-i18n="priceNote"></div>
+    </section>
+
+    <section class="block">
+      <h2 data-i18n="calcTitle"></h2>
+      <div class="calc">
+        <input class="field num" id="weight" type="number" min="0" step="0.25" value="1" inputmode="decimal" data-i18n-aria="weight">
+        <select class="field" id="wunit" data-i18n-aria="unit">
+          <option value="baht" data-i18n="uBaht"></option>
+          <option value="salung" data-i18n="uSalung"></option>
+          <option value="kyattha" data-i18n="uKyattha"></option>
+          <option value="pe" data-i18n="uPe"></option>
+          <option value="gram" data-i18n="uGram"></option>
+        </select>
+        <select class="field full" id="kind" data-i18n-aria="kind">
+          <option value="bar-sell" data-i18n="kBarSell"></option>
+          <option value="bar-buy" data-i18n="kBarBuy"></option>
+          <option value="orn-sell" data-i18n="kOrnSell"></option>
+          <option value="orn-buy" data-i18n="kOrnBuy"></option>
+        </select>
+      </div>
+      <div class="result">
+        <span class="note" id="calc-note">—</span>
+        <span class="v num" id="calc-out">—</span>
+      </div>
+    </section>
+
+    <footer>
+      <span data-i18n="source"></span> – <a href="https://www.goldtraders.or.th" target="_blank" rel="noopener noreferrer" data-i18n="goldSource"></a><br>
+      <span data-i18n="goldFooter"></span>
+    </footer>
+  </div>
+
+  <!-- ===================== LOTTERY ===================== -->
+  <div id="panel-lotto" class="col" role="tabpanel" aria-labelledby="tab-lotto" hidden>
+    <section class="block">
+      <div class="row-between">
+        <span class="label" id="first-head"></span>
+        <select class="field draw-pick" id="draw" data-i18n-aria="drawDate"></select>
+      </div>
+      <div class="digits num" id="digits" aria-live="polite"></div>
+      <div class="che-row" id="che-row"></div>
+      <div class="runs num">
+        <div class="run"><div class="label" data-i18n="front3"></div><div class="v" id="r-last3f">—</div></div>
+        <div class="run"><div class="label" data-i18n="back3"></div><div class="v" id="r-last3b">—</div></div>
+        <div class="run"><div class="label" data-i18n="back2"></div><div class="v" id="r-last2">—</div></div>
+      </div>
+      <div class="status" id="lotto-note" role="status"></div>
+    </section>
+
+    <section class="block">
+      <h2 data-i18n="checkTitle"></h2>
+      <form id="ticket-form" autocomplete="off">
+        <label class="ticket num" for="ticket" data-i18n-aria="ticketAria">
+          <span class="cell"></span><span class="cell"></span><span class="cell"></span>
+          <span class="cell"></span><span class="cell"></span><span class="cell"></span>
+          <input id="ticket" type="text" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="off" enterkeyhint="done">
+        </label>
+        <button id="check-btn" type="submit" hidden></button>
+      </form>
+      <div class="note hint" id="ticket-hint"></div>
+      <ul class="list num" id="checks"></ul>
+      <div class="note" id="checks-empty" data-i18n="checksEmpty" style="margin-top:10px"></div>
+      <div class="facts">
+        <div><div class="label" data-i18n="nextDraw"></div><div class="v num" id="next-draw">—</div></div>
+        <div><div class="label" data-i18n="claimBy"></div><div class="v num" id="claim-by">—</div></div>
+      </div>
+    </section>
+
+    <section class="block">
+      <h2 data-i18n="otherPrizes"></h2>
+      <div class="seg" id="seg" role="group" data-i18n-aria="prizeType"></div>
+      <div class="row-between"><span class="label" id="tier-count"></span><span class="num" style="font-weight:800" id="tier-reward"></span></div>
+      <div class="nums num" id="tier-nums"></div>
+    </section>
+
+    <footer>
+      <span data-i18n="source"></span> – <a href="https://www.glo.or.th" target="_blank" rel="noopener noreferrer" data-i18n="gloSource"></a> · <span data-i18n="verifyNote"></span><br>
+      <span data-i18n="taxNote"></span>
+    </footer>
+  </div>
+
+  <!-- ===================== DREAM ===================== -->
+  <div id="panel-dream" class="col" role="tabpanel" aria-labelledby="tab-dream" hidden>
+    <section class="block">
+      <div class="dream-search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input class="field" id="dream-search" type="text" data-i18n-placeholder="dreamSearchPlaceholder" autocomplete="off">
+      </div>
+      <div class="seg" id="dream-seg" role="group"></div>
+      <div class="dream-count" id="dream-count"></div>
+      <div class="dream-grid" id="dream-grid"></div>
+      <div class="dream-empty" id="dream-empty" data-i18n="dreamEmpty" hidden></div>
+      <button class="load-more" id="dream-more" data-i18n="dreamLoadMore" hidden></button>
+    </section>
+    <footer>
+      <span data-i18n="dreamAbout"></span>
+    </footer>
+  </div>
+
+  <!-- ===================== SETTINGS ===================== -->
+  <div id="panel-settings" class="col" role="tabpanel" aria-labelledby="tab-settings" hidden>
+    <section class="block">
+      <h2 data-i18n="settingsTheme"></h2>
+      <div class="theme-seg">
+        <div class="seg" id="theme-seg" role="group">
+          <button type="button" data-theme-choice="auto">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor" stroke="none"/></svg>
+            <span data-i18n="themeAuto"></span>
+          </button>
+          <button type="button" data-theme-choice="dark">
+            <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>
+            <span data-i18n="themeDark"></span>
+          </button>
+          <button type="button" data-theme-choice="light">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2.5v2.5M12 19v2.5M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2.5 12H5M19 12h2.5M4.2 19.8 6 18M18 6l1.8-1.8"/></svg>
+            <span data-i18n="themeLight"></span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="block">
+      <h2 data-i18n="settingsAbout"></h2>
+      <div class="settings-card">
+        <div class="settings-row">
+          <span class="s-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0-4-4m4 4 4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg></span>
+          <div class="s-body">
+            <div class="s-title" id="settings-version">v1.0.0</div>
+            <div class="s-sub" id="settings-version-sub" data-i18n="settingsVersionSub"></div>
+          </div>
+        </div>
+        <div class="settings-row">
+          <span class="s-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg></span>
+          <div class="s-body">
+            <div class="s-title" data-i18n="settingsDeveloper"></div>
+            <div class="s-sub">Khun Saw Lay · <a href="https://www.facebook.com/tsawtaly" target="_blank" rel="noopener noreferrer">Facebook</a></div>
+          </div>
+        </div>
+        <div class="settings-row">
+          <span class="s-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="3"/><circle cx="17" cy="8" r="2.4"/><path d="M2 21c0-3.6 3.1-6 7-6s7 2.4 7 6M16 15.2c2.8.3 5 2.3 5 5.3"/></svg></span>
+          <div class="s-body">
+            <div class="s-title" data-i18n="settingsCredits"></div>
+            <div class="s-sub" data-i18n="settingsCreditsText"></div>
+          </div>
+        </div>
+        <div class="settings-row">
+          <span class="s-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/></svg></span>
+          <div class="s-body">
+            <div class="s-title" data-i18n="settingsPrivacy"></div>
+            <div class="s-sub" data-i18n="settingsPrivacyText"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<nav class="tabbar" role="tablist">
+  <div class="col">
+    <button class="tab" role="tab" id="tab-gold" aria-controls="panel-gold" aria-selected="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3 18h18l-2.6-7H5.6z"/><path d="M8 11l1.6-5h4.8L16 11"/></svg>
+      <span data-i18n="tabGold"></span>
+    </button>
+    <button class="tab" role="tab" id="tab-lotto" aria-controls="panel-lotto" aria-selected="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3 7.5a2 2 0 0 0 0 4V17h18v-5.5a2 2 0 0 1 0-4V5H3z"/><path d="M15 5v12" stroke-dasharray="2 2"/></svg>
+      <span data-i18n="tabLotto"></span>
+    </button>
+    <button class="tab" role="tab" id="tab-dream" aria-controls="panel-dream" aria-selected="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      <span data-i18n="tabDream"></span>
+    </button>
+    <button class="tab" role="tab" id="tab-settings" aria-controls="panel-settings" aria-selected="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 13a7.6 7.6 0 0 0 0-2l2-1.5-2-3.5-2.4.6a7.7 7.7 0 0 0-1.7-1L15 3h-4l-.3 2.6a7.7 7.7 0 0 0-1.7 1L6.6 6 4.6 9.5 6.6 11a7.6 7.6 0 0 0 0 2l-2 1.5 2 3.5 2.4-.6a7.7 7.7 0 0 0 1.7 1L9 21h4l.3-2.6a7.7 7.7 0 0 0 1.7-1l2.4.6 2-3.5z"/></svg>
+      <span data-i18n="tabSettings"></span>
+    </button>
+  </div>
+</nav>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } },
+    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+  };
+  const money = (n, dec = 2) => n.toLocaleString("en-US", { minimumFractionDigits: dec, maximumFractionDigits: dec });
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const APP_VERSION = "1.0.0"; // keep in sync with package.json
+
+  /* =================== Languages ===================
+     Texts live in i18n.js. The app opens in Pa'O; Pa'O lines left "" show Burmese. */
+  const LANGS = ["blk", "my", "en"];
+  let lang = store.get("lang", "blk");
+  if (!window.I18N[lang]) lang = "blk";
+
+  function t(key, vars) {
+    let s = (I18N[lang] && I18N[lang][key]) || I18N.my[key] || key;
+    if (vars) for (const k in vars) s = s.split(`{${k}}`).join(vars[k]);
+    return s;
+  }
+  const monthName = (m) => t("months").split(",")[m - 1]?.trim() || String(m);
+  const fmtDate = (y, m, d) => `${d} ${monthName(m)} ${y}`;
+  const isoDate = (iso) => { const [y, m, d] = iso.split("-").map(Number); return fmtDate(y, m, d); };
+
+  function applyStatic() {
+    document.documentElement.lang = lang;
+    document.title = t("docTitle");
+    document.querySelectorAll("[data-i18n]").forEach((el) => { el.textContent = t(el.dataset.i18n); });
+    document.querySelectorAll("[data-i18n-aria]").forEach((el) => el.setAttribute("aria-label", t(el.dataset.i18nAria)));
+    document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => el.setAttribute("placeholder", t(el.dataset.i18nPlaceholder)));
+    $("lang-name").textContent = I18N[lang].langName || I18N.my.langName;
+    $("lang-menu").innerHTML = LANGS.map((l) =>
+      `<button type="button" role="menuitemradio" aria-checked="${l === lang}" data-lang="${l}">${esc(I18N[l].langName || l)}</button>`).join("");
+  }
+  function setLang(l) {
+    lang = l;
+    store.set("lang", l);
+    applyStatic();
+    renderGold(); renderGoldNote(); calc();
+    if (lottoStarted) { fillDrawSelect(latestIso); renderDraw(); renderChecks(); renderFacts(); renderLottoNote(); renderHint(); }
+    if (window.renderDream) window.renderDream();
+  }
+  const closeMenu = () => { $("lang-menu").hidden = true; $("lang-btn").setAttribute("aria-expanded", "false"); };
+  $("lang-btn").addEventListener("click", (e) => {
+    e.stopPropagation();
+    const open = $("lang-menu").hidden;
+    $("lang-menu").hidden = !open;
+    $("lang-btn").setAttribute("aria-expanded", String(open));
+  });
+  $("lang-menu").addEventListener("click", (e) => {
+    const l = e.target.closest("[data-lang]")?.dataset.lang;
+    if (l) { setLang(l); closeMenu(); }
+  });
+  document.addEventListener("click", (e) => { if (!e.target.closest(".lang")) closeMenu(); });
+
+  /* =================== Data sources ===================
+     Website: goes through this site's own /api routes (avoids CORS, adds caching).
+     Android app: calls the sources directly. Capacitor sends these requests through
+     Android's native HTTP (CapacitorHttp), so browser CORS rules don't apply. */
+  const IS_APP = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+  const GOLD_URL = "https://api.chnwt.dev/thai-gold-api/latest";
+
+  // App: status-bar icons follow the page (dark icons on white, light icons in dark mode).
+  if (IS_APP) {
+    try { window.Capacitor.Plugins.SystemBars.setStyle({ style: "DEFAULT" }); } catch {}
+  }
+
+  async function fetchGold() {
+    if (IS_APP) {
+      const res = await fetch(GOLD_URL, { cache: "no-store" });
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const json = await res.json();
+      if (json.status !== "success") throw new Error("bad data");
+      return json.response;
+    }
+    const res = await fetch("/api/price", { cache: "no-store" });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "HTTP " + res.status);
+    return data;
+  }
+
+  /** key: "latest" or "YYYY-MM-DD". Throws an error with .notFound when there's no draw that day. */
+  async function fetchLotto(key) {
+    if (IS_APP) {
+      const { fetchLottery } = await import("./lotto.js");   // same module the website's /api/lottery uses
+      return fetchLottery(key === "latest" ? null : key);
+    }
+    const res = await fetch(key === "latest" ? "/api/lottery" : `/api/lottery?date=${key}`);
+    const data = await res.json().catch(() => ({}));
+    if (res.status === 404) throw Object.assign(new Error("notfound"), { notFound: true });
+    if (!res.ok) throw new Error(data.error || "HTTP " + res.status);
+    return data;
+  }
+
+  /* =================== Theme =================== */
+  let theme = store.get("theme", "auto");
+  function applyTheme() {
+    if (theme === "auto") document.documentElement.removeAttribute("data-theme");
+    else document.documentElement.setAttribute("data-theme", theme);
+    document.querySelectorAll("#theme-seg [data-theme-choice]").forEach((b) =>
+      b.setAttribute("aria-pressed", String(b.dataset.themeChoice === theme)));
+  }
+  function setTheme(v) { theme = v; store.set("theme", v); applyTheme(); }
+  $("theme-seg").addEventListener("click", (e) => {
+    const v = e.target.closest("[data-theme-choice]")?.dataset.themeChoice;
+    if (v) setTheme(v);
+  });
+  applyTheme();
+
+  /* =================== Tabs =================== */
+  function showTab(name) {
+    $("panel-gold").hidden = name !== "gold";
+    $("panel-lotto").hidden = name !== "lotto";
+    $("panel-dream").hidden = name !== "dream";
+    $("panel-settings").hidden = name !== "settings";
+    $("tab-gold").setAttribute("aria-selected", String(name === "gold"));
+    $("tab-lotto").setAttribute("aria-selected", String(name === "lotto"));
+    $("tab-dream").setAttribute("aria-selected", String(name === "dream"));
+    $("tab-settings").setAttribute("aria-selected", String(name === "settings"));
+    store.set("tab", name);
+    history.replaceState(null, "", name === "lotto" ? "#lotto" : name === "dream" ? "#dream" : name === "settings" ? "#settings" : "#");
+    window.scrollTo(0, 0);
+    if (name === "lotto") initLotto();
+    if (name === "dream" && window.initDream) window.initDream();
+  }
+  $("tab-gold").addEventListener("click", () => showTab("gold"));
+  $("tab-lotto").addEventListener("click", () => showTab("lotto"));
+  $("tab-dream").addEventListener("click", () => showTab("dream"));
+  $("tab-settings").addEventListener("click", () => showTab("settings"));
+  $("settings-version").textContent = "v" + APP_VERSION;
+
+  /* =================== Gold =================== */
+  // 1 baht-weight = 15.244 g (bar) / 15.16 g (jewelry); 1 kyattha = 16.329 g; 1 pe = 1/16 kyattha
+  const G_PER_BAHT = { bar: 15.244, orn: 15.16 };
+  const G_PER_KYATTHA = 16.329;
+  const prices = {};
+  let goldMeta = null;
+  let goldNote = "";
+  const toNum = (s) => parseFloat(String(s).replace(/,/g, ""));
+
+  function fmtThaiDate(s) {     // "02/02/2569" (Thai Buddhist year)
+    const m = String(s).match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+    if (!m) return String(s);
+    let [, d, mo, y] = m.map(Number);
+    if (y > 2400) y -= 543;
+    return fmtDate(y, mo, d);
+  }
+  function parseTime(s) {       // "เวลา 17:23 น. (ครั้งที่ 69)"
+    const tm = String(s).match(/(\d{1,2}):(\d{2})/);
+    const r = String(s).match(/ครั้งที่\s*(\d+)/);
+    return { time: tm ? `${tm[1]}:${tm[2]}` : "", round: r ? r[1] : "" };
+  }
+
+  function renderGold() {
+    if (!goldMeta) { $("hero-date").textContent = t("loadingPrice"); $("hero-buy").hidden = true; return; }
+    for (const k in prices) $(k).textContent = money(prices[k]);
+    $("hero").textContent = money(prices["bar-sell"]);
+    const { time, round } = parseTime(goldMeta.update_time);
+    $("hero-date").textContent = `${fmtThaiDate(goldMeta.update_date)}${time ? ", " + time : ""}`;
+    $("hero-round").textContent = round ? t("roundN", { n: round }) : "";
+    $("hero-buy").hidden = false;
+    $("hero-buy").innerHTML = `${esc(t("buyBack"))} <b>${money(prices["bar-buy"])}</b>`;
+    calc();
+  }
+  function renderGoldNote() { $("gold-note").textContent = goldNote ? t(goldNote) : ""; }
+  function applyGold(data) {
+    const p = data.price;
+    prices["bar-sell"] = toNum(p.gold_bar.sell);
+    prices["bar-buy"]  = toNum(p.gold_bar.buy);
+    prices["orn-sell"] = toNum(p.gold.sell);
+    prices["orn-buy"]  = toNum(p.gold.buy);
+    goldMeta = data;
+    document.body.classList.remove("loading");
+    renderGold();
+  }
+  async function loadGold() {
+    const btn = $("refresh");
+    btn.classList.add("spin");
+    try {
+      const data = await fetchGold();
+      applyGold(data);
+      store.set("lastGoldPrice", data);
+      goldNote = "";
+    } catch {
+      goldNote = goldMeta ? "offlineGold" : "errorGold";
+    } finally {
+      renderGoldNote();
+      btn.classList.remove("spin");
+    }
+  }
+  function calc() {
+    const kind = $("kind").value;
+    const price = prices[kind];
+    const w = parseFloat($("weight").value) || 0;
+    if (!price) return;
+    const type = kind.split("-")[0];
+    const grams = {
+      baht: w * G_PER_BAHT[type], salung: (w / 4) * G_PER_BAHT[type],
+      kyattha: w * G_PER_KYATTHA, pe: (w / 16) * G_PER_KYATTHA, gram: w,
+    }[$("wunit").value];
+    $("calc-out").textContent = `${money((grams / G_PER_BAHT[type]) * price)} ฿`;
+    const note = [`≈ ${(Math.round(grams * 100) / 100).toLocaleString("en-US")} ${t("grams")}`];
+    if (kind === "orn-sell") note.push(t("noMaking"));
+    $("calc-note").textContent = note.join(" · ");
+  }
+  $("refresh").addEventListener("click", loadGold);
+  ["weight", "wunit", "kind"].forEach((id) => $(id).addEventListener("input", calc));
+
+  /* =================== Lottery =================== */
+  const PRIZE_KEYS = { first: "pFirst", near1: "pNear1", second: "pSecond", third: "pThird", fourth: "pFourth", fifth: "pFifth", last3f: "front3", last3b: "back3", last2: "back2" };
+  const prizeName = (k) => t(PRIZE_KEYS[k]);
+  const TIERS = [["near1", "tNear1"], ["second", "tSecond"], ["third", "tThird"], ["fourth", "tFourth"], ["fifth", "tFifth"]];
+  const STAMP_DUTY = 0.005;   // 0.5% deducted from government lottery prizes
+  const draws = {};
+  let currentDraw = null;
+  let latestIso = null;
+  let currentTier = "near1";
+  let lottoNote = "";
+  let hint = { key: "ticketHint" };
+  let tickets = store.get("tickets", []).filter((x) => /^\d{6}$/.test(x));
+  let lottoStarted = false;
+
+  // Draw schedule: 1st and 16th, with the usual holiday shifts (17 Jan, 2 May, 30 Dec; no 1 Jan).
+  function daysFor(y, m) { return m === 1 ? [17] : m === 5 ? [2, 16] : m === 12 ? [1, 16, 30] : [1, 16]; }
+  function drawDates(monthsBack = 24) {
+    const out = [], now = new Date();
+    for (let i = 0; i < monthsBack; i++) {
+      const f = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const y = f.getFullYear(), m = f.getMonth() + 1;
+      for (const d of [...daysFor(y, m)].reverse()) {
+        if (new Date(y, m - 1, d, 17) <= now) out.push(`${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`);
+      }
+    }
+    return out;
+  }
+  function nextDraw() {
+    const now = new Date();
+    for (let i = 0; i < 3; i++) {
+      const f = new Date(now.getFullYear(), now.getMonth() + i, 1);
+      const y = f.getFullYear(), m = f.getMonth() + 1;
+      for (const d of daysFor(y, m)) {
+        const dt = new Date(y, m - 1, d, 16);
+        if (dt > now) return dt;
+      }
+    }
+    return null;
+  }
+  function renderFacts() {
+    const nd = nextDraw();
+    if (nd) {
+      const days = Math.ceil((new Date(nd.getFullYear(), nd.getMonth(), nd.getDate()) - new Date(new Date().toDateString())) / 86400000);
+      $("next-draw").textContent = `${nd.getDate()} ${monthName(nd.getMonth() + 1)} · ${days > 0 ? t("daysN", { n: days }) : t("today")}`;
+    }
+    if (currentDraw) {
+      const [y, m, d] = currentDraw.date.split("-").map(Number);
+      $("claim-by").textContent = fmtDate(y + 2, m, d);
+    }
+  }
+
+  function fillDrawSelect(latest) {
+    const sel = $("draw");
+    const keep = sel.value;
+    sel.innerHTML = "";
+    sel.append(new Option(latest ? isoDate(latest) : t("latestDraw"), "latest"));
+    for (const iso of drawDates()) if (iso !== latest) sel.append(new Option(isoDate(iso), iso));
+    if ([...sel.options].some((o) => o.value === keep)) sel.value = keep;
+  }
+
+  async function getDraw(key) {
+    if (draws[key]) return draws[key];
+    const data = await fetchLotto(key);
+    draws[key] = data;
+    if (key === "latest") { draws[data.date] = data; store.set("lastLotto", data); }
+    return data;
+  }
+
+  function renderLottoNote() { $("lotto-note").textContent = lottoNote ? t(lottoNote) : ""; }
+  async function selectDraw(key) {
+    currentDraw = null;
+    lottoNote = "";
+    renderLottoNote(); renderDraw(); renderChecks();
+    try {
+      currentDraw = await getDraw(key);
+      if (key === "latest") { latestIso = currentDraw.date; fillDrawSelect(latestIso); }
+    } catch (e) {
+      const saved = key === "latest" && store.get("lastLotto", null);
+      if (saved) { currentDraw = saved; lottoNote = "offlineLotto"; }
+      else lottoNote = e.notFound ? "noDraw" : "errorLotto";
+    }
+    renderLottoNote(); renderDraw(); renderChecks(); renderFacts();
+  }
+
+  /** Prizes a 6-digit ticket wins in a draw (prizes add up). */
+  function checkTicket(num, draw) {
+    const wins = [];
+    const add = (key, n) => { for (let i = 0; i < n; i++) wins.push(key); };
+    for (const key of ["first", "near1", "second", "third", "fourth", "fifth"]) add(key, draw.prizes[key].numbers.filter((n) => n === num).length);
+    add("last3f", draw.prizes.last3f.numbers.filter((n) => n === num.slice(0, 3)).length);
+    add("last3b", draw.prizes.last3b.numbers.filter((n) => n === num.slice(-3)).length);
+    add("last2", draw.prizes.last2.numbers.filter((n) => n === num.slice(-2)).length);
+    return { wins, total: wins.reduce((s, k) => s + draw.prizes[k].reward, 0) };
+  }
+
+  function renderDraw() {
+    const d = currentDraw;
+    const first = d ? d.prizes.first.numbers[0] : "";
+    $("first-head").textContent = t("firstPrizeHead", { amt: money(d ? d.prizes.first.reward : 6000000, 0) });
+    $("digits").innerHTML = Array.from({ length: 6 }, (_, i) =>
+      `<span class="digit${first ? (i >= 3 ? " che" : "") : " empty"}">${first ? first[i] : "0"}</span>`).join("");
+    $("che-row").innerHTML = first ? `<span class="che-label">${esc(t("che"))} ${first.slice(-3)}</span>` : "";
+    for (const k of ["last3f", "last3b", "last2"]) $("r-" + k).textContent = d ? d.prizes[k].numbers.join("  ") : "—";
+
+    $("seg").innerHTML = TIERS.map(([k, label]) =>
+      `<button type="button" data-tier="${k}" aria-pressed="${k === currentTier}">${esc(t(label))}</button>`).join("");
+    const p = d && d.prizes[currentTier];
+    const mine = new Set(tickets);
+    $("tier-count").textContent = p ? t("prizesN", { name: prizeName(currentTier), n: p.numbers.length }) : "";
+    $("tier-reward").textContent = p ? `${money(p.reward, 0)} ฿` : "";
+    $("tier-nums").className = "nums num" + (p && p.numbers.length <= 2 ? " wide" : "");
+    $("tier-nums").innerHTML = p
+      ? p.numbers.map((n) => `<span class="${mine.has(n) ? "hit" : ""}">${n}</span>`).join("")
+      : `<span class="note" style="grid-column:1/-1;text-align:left">${lottoNote ? "—" : esc(t("loading"))}</span>`;
+  }
+
+  function renderChecks() {
+    $("checks-empty").hidden = tickets.length > 0;
+    $("checks").innerHTML = tickets.map((num) => {
+      const del = `<button class="del" type="button" data-del="${num}" aria-label="${esc(t("remove"))} ${num}">×</button>`;
+      if (!currentDraw) return `<li class="item lose"><span class="no">${num}</span><span class="what">${esc(t("checking"))}</span>${del}</li>`;
+      const { wins, total } = checkTicket(num, currentDraw);
+      if (!wins.length) return `<li class="item lose"><span class="no">${num}</span><span class="what">${esc(t("noWin"))}</span>${del}</li>`;
+      const names = [...new Set(wins)].map((k) => {
+        const c = wins.filter((w) => w === k).length;
+        return prizeName(k) + (c > 1 ? ` ×${c}` : "");
+      }).join(", ");
+      return `<li class="item win"><span class="no">${num}</span>
+        <span class="amt">${money(total, 0)} ฿<small>${esc(t("afterTax"))} ${money(total * (1 - STAMP_DUTY), 0)} ฿</small></span>${del}
+        <span class="what">${esc(t("won"))} · ${esc(names)}</span></li>`;
+    }).join("");
+  }
+  function renderHint() { $("ticket-hint").textContent = t(hint.key, hint.vars); }
+
+  /* Six-cell ticket input: digits only, exactly 6, checks on the 6th digit */
+  const input = $("ticket");
+  const cells = [...document.querySelectorAll(".cell")];
+  function paintCells() {
+    const v = input.value;
+    const focused = document.activeElement === input;
+    cells.forEach((c, i) => {
+      c.textContent = v[i] || "";
+      c.classList.toggle("active", focused && i === Math.min(v.length, 5));
+    });
+  }
+  input.addEventListener("input", () => {
+    input.value = input.value.replace(/\D/g, "").slice(0, 6);
+    paintCells();
+    if (input.value.length === 6) submitTicket();
+  });
+  input.addEventListener("focus", paintCells);
+  input.addEventListener("blur", paintCells);
+
+  function submitTicket() {
+    const num = input.value;
+    if (!/^\d{6}$/.test(num)) return;
+    tickets = [num, ...tickets.filter((x) => x !== num)].slice(0, 20);
+    store.set("tickets", tickets);
+    input.value = "";
+    paintCells();
+    renderChecks(); renderDraw();
+    hint = { key: "checkedN", vars: { n: num } };
+    renderHint();
+  }
+  $("ticket-form").addEventListener("submit", (e) => { e.preventDefault(); submitTicket(); });
+
+  $("checks").addEventListener("click", (e) => {
+    const n = e.target.closest("[data-del]")?.dataset.del;
+    if (!n) return;
+    tickets = tickets.filter((x) => x !== n);
+    store.set("tickets", tickets);
+    renderChecks(); renderDraw();
+  });
+  $("seg").addEventListener("click", (e) => {
+    const k = e.target.closest("[data-tier]")?.dataset.tier;
+    if (k) { currentTier = k; renderDraw(); }
+  });
+  $("draw").addEventListener("change", (e) => selectDraw(e.target.value));
+
+  function initLotto() {
+    if (lottoStarted) return;
+    lottoStarted = true;
+    fillDrawSelect(null);
+    paintCells(); renderHint(); renderFacts();
+    selectDraw("latest");
+  }
+
+  /* =================== Start =================== */
+  applyStatic();
+  renderGold();
+  const savedGold = store.get("lastGoldPrice", null);
+  if (savedGold) applyGold(savedGold);
+  loadGold();
+  setInterval(loadGold, 5 * 60 * 1000);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) loadGold(); });
+  showTab(location.hash === "#lotto" ? "lotto" : location.hash === "#dream" ? "dream" : location.hash === "#settings" ? "settings" : store.get("tab", "gold"));
+</script>
+<script src="dream-data.js"></script>
+<script src="dream.js"></script>
+</body>
+</html>

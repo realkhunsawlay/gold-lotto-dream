@@ -1,0 +1,24 @@
+{
+  "appId": "com.khunsawlay.goldprice",
+  "appName": "ရွှေဈေး နှင့် ထီ",
+  "webDir": "www",
+  "android": {
+    "backgroundColor": "#ffffff"
+  },
+  "plugins": {
+    "CapacitorHttp": {
+      "enabled": true
+    },
+    "SplashScreen": {
+      "launchShowDuration": 800,
+      "launchAutoHide": true,
+      "backgroundColor": "#28166f",
+      "showSpinner": false
+    },
+    "SystemBars": {
+      "insetsHandling": "native",
+      "initialViewportFitValueHint": "cover",
+      "style": "DEFAULT"
+    }
+  }
+}
